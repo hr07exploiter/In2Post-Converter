@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title style="color:burlywood">In2Post Converter</title>
+        <script type="text/javascript">
+            class stacker {
+  constructor(size = 100) {
+    this.size = size;
+    this.items = [];
+    this.top = -1; // we can also is -> this.items.length
+  }
+
+  // Getters for stack below
+
+  get lastIndex() {
+    // this return the index of last item
+    return this.top;
+  }
+
+  get stackLen() {
+    return this.items.length;
+  }
+
+  get leftSize() {
+    return this.size - this.stackLen;
+  }
+
+  get peek() {
+    if (this.isEmpty() == true) {
+      return null;
+    } else {
+      return this.items[this.top];
+    }
+  }
+
+  // Setters for stack below
+  getItem(index) {
+    if (index > this.top || index < 0) {
+      return null;
+    } else {
+      return this.items[index];
+    }
+  }
+  isFull() {
+    if (this.top == this.size - 1) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  isEmpty() {
+    if (this.top < 0) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  push(element) {
+    if (this.isFull() == true) {
+      return console.log("Stack is Full Now");
+    } else {
+      this.top++;
+      this.items[this.top] = element;
+      return true;
+    }
+  }
+
+  pop() {
+    var data;
+    if (this.isEmpty() == true) {
+      return false;
+    } else {
+      data = this.items.splice(this.top, 1); // this will return an array with single element more efficient
+      this.top--;
+      return data[0];
+    }
+  }
+
+  traverse() {
+    return this.items;
+  }
+}
+
+// INFIX TO POSTFIX
+
+const preference = {
+  "-": 0,
+  "+": 0,
+  "%": 1,
+  "/": 1,
+  "*": 1,
+  "^": 2,
+  ")": 3,
+  "(": 3,
+};
+
+function precidencer(item) {
+  var operators = ["", "(", ")", "-", "+", "%", "/", "*", "^"];
+
+  for (var j = 0; j < operators.length; j++) {
+    if (item == operators[j]) {
+      return j;
+    }
+  }
+
+  return 0;
+}
+
+const isAnOperator = (s) => preference[s] !== undefined;
+const isAParen = (s) => preference[s] === 3;
+
+function infixToPostfixV2(expression, tab = 0) {
+  console.log(expression);
+}
+
+// Infix to postfix conversion
+function infixToPostfix(expression, tab = 0, prefixMode = false) {
+  const infixExp = [...expression.split(""), ")"];
+  const postfixExp = [];
+
+  const stack = ["("];
+
+  var table = {
+    exp: [],
+    stack: [],
+    conexp: [],
+  };
+
+  table.exp.push("");
+  table.stack.push(stack.join(" "));
+  table.conexp.push(postfixExp.join(""));
+
+  for (var char of infixExp) {
+    if (!isAnOperator(char)) {
+      postfixExp.push(char);
+    } else if (char === "(") {
+      stack.push("(");
+    } else if (char === ")") {
+      let peek = stack[stack.length - 1];
+      while (stack.length > 0 && peek !== "(") {
+        const top = stack.pop();
+        postfixExp.push(top);
+        peek = stack[stack.length - 1];
+      }
+      stack.pop();
+    } else if (isAnOperator(char)) {
+      let pref = preference[char];
+      let peek = stack[stack.length - 1];
+
+      const condition = () =>
+        prefixMode ? pref < preference[peek] : pref <= preference[peek];
+
+      while (condition()) {
+        if (peek === "(") {
+          break;
+        }
+        let top = stack.pop();
+        postfixExp.push(top);
+        peek = stack[stack.length - 1];
+      }
+      stack.push(char);
+    }
+    if (tab == 1) {
+      table.exp.push(char);
+      table.stack.push(stack.join(" "));
+      table.conexp.push(postfixExp.join(""));
+    }
+  }
+  postfixExp.push(...stack.reverse());
+
+  return {
+    postfixExpression: postfixExp.join(""),
+    table: table,
+  };
+}
+
+// reverser
+
+function reverser(expression) {
+  var _temp = expression.split("");
+
+  for (var i = 0; i < expression.length; i++) {
+    if (_temp[i] === ")") {
+      _temp[i] = "(";
+    } else if (_temp[i] === "(") {
+      _temp[i] = ")";
+    }
+  }
+
+  return _temp.reverse().join("");
+}
+
+function infixToPrefix(expression, tab = 0) {
+  expression = infixToPostfix(reverser(expression), tab, true);
+  return {
+    prefixExpression: reverser(expression["postfixExpression"]),
+    table: expression["table"],
+  };
+}
+
+function isNumbers(expression) {
+  let isNumber = true;
+
+  const splited = expression.split(" ");
+
+  for (const char of splited) {
+    if ("+-/*()^".includes(char)) continue;
+
+    const num = parseInt(char);
+    if (num.toString() === "NaN") {
+      isNumber = false;
+      break;
+    }
+  }
+
+  return isNumber;
+}
+
+function postfixEval(expression) {
+  expression = expression.trim();
+
+  if (expression.length > 1 && !expression.includes(" ")) {
+    alert("Please add 'space' between elements");
+    return;
+  }
+
+  const postfixExp = [...expression.split(" "), ")"];
+
+  const isNumber = isNumbers(expression);
+
+  const table = {
+    char: [],
+    s: [],
+  };
+
+  const stack = [];
+  let finalResult = 0;
+  for (const char of postfixExp) {
+    if (char === ")") break;
+
+    if (!isAnOperator(char)) {
+      stack.push(char);
+    } else {
+      const a = stack.pop();
+      const b = stack.pop();
+
+      let result = `(${b}${char}${a})`;
+
+      stack.push(result);
+    }
+
+    finalResult = stack[stack.length - 1];
+
+    table.char.push(char);
+    table.s.push(stack.join(" "));
+  }
+
+  let _tresult = `${finalResult}`;
+
+  if (isNumber) {
+    _tresult += ` = ${eval(finalResult)}`;
+  }
+
+  table.s[table.s.length - 1] = _tresult;
+
+  return table;
+}
+
+function prefixEval(expression) {
+  expression = expression.trim();
+  const isNumber = isNumbers(expression);
+  if (expression.length > 1 && !expression.includes(" ")) {
+    alert("Please add 'space' between elements");
+    return;
+  }
+
+  const prefixExp = expression.split(" ");
+
+  const stack = [];
+
+  const table = {
+    char: [],
+    s: [],
+  };
+
+  for (const char of prefixExp.reverse()) {
+    if (!isAnOperator(char)) {
+      stack.push(char);
+    } else {
+      const a = stack.pop();
+      const b = stack.pop();
+
+      const result = `(${a}${char}${b})`;
+
+      stack.push(result);
+    }
+
+    table.char.push(char);
+    table.s.push(stack.join(" "));
+  }
+
+  const finalResult = table.s[table.s.length - 1];
+
+  let _tresult = `${finalResult}`;
+  console.log(finalResult);
+  if (isNumber) {
+    _tresult += ` = ${eval(finalResult)}`;
+  }
+
+  table.s[table.s.length - 1] = _tresult;
+
+  return table;
+}
+
+function checker(expression) {
+  if (precidencer(expression[0]) > 2) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+
+
+
+
+        </script>
+        <!-- Bootstrap CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css"
+            integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+    </head>
+
+    <body background="190307Gate Picture.jpg" style="background-size: cover">
+        </nav>
+        <div class="container">
+            <div style="background:#d9dccec9 !important" class="jumbotron mt-3 text-center">
+                <div class="alert alert-warning alert">
+                    <b>Note:</b> Do not use spaces in expression. A+B/C or 4+5/3 <br class="d-md-none">not A + B / C or
+                    4 +
+                    5 / 3
+                </div>
+                <h4><span class="badge badge-pill badge-success"> Developed By:- Shubham Yadav</span></h4>
+                <h1 class="lead" style="font-size:10vmin">Infix -> Postfix &amp Prefix </h1>
+                <p class="lead"><b>Special Thanks to:- Mr. Priyvat Sir, Mr. Narsimha Sir for their very cool guidance.</b></p>
+
+                <hr class="my-4">
+                <p>Enter the Infix expression below in box and press Convert</p>
+                <div>
+                    <label for="expression">
+                        <p>Type the Expression below without space<br>(NO SPACE)</small></p>
+                        <input type="text" class="form-control form-control-lg" name="expression" id="expression">
+                        <br>
+                        <label for="fullpostfix">
+                            <input type="radio" name="fixer" checked id="fullpostfix" value="1"> Postfix Table
+                        </label>
+                        <label for="fullprefix">
+                            <input type="radio" name="fixer" id="fullprefix" value="2"> Prefix Table
+                        </label>
+                        <hr>
+                        <button class="btn btn-primary btn-lg" id="convert" role="button">Convert</button>
+                    </label>
+                </div>
+
+                <div id="shortresult">
+                    <p class="lead">Postfix : <span id="postfix" class="font-weight-bold"></span> | Prefix : <span
+                            id="prefix" class="font-weight-bold"></span></p>
+                    <div class="text-center">
+                        <small>By Shubham Yadav</small>
+                    </div>
+                </div>
+
+            </div>
+
+            <div id="fullresult" align="center">
+                <div class="row" align="center">
+                    <div class="col-md-8" style="background:#d9dccec9 !important" align="center">
+                        <table class="table table-striped table-bordered">
+                            <thead class="thead-inverse text-left">
+                                <tr>
+                                    <th>Sr. no.</th>
+                                    <th>Expression</th>
+                                    <th>Stack</th>
+                                    <th id="itemname">Postfix</th>
+                                </tr>
+                            </thead>
+
+                            <tbody id="tabledata" class="text-left">
+
+
+                            </tbody>
+                            <br>
+                            <span id="ifpre" class="lead"></span>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Optional JavaScript -->
+        <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+            integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+            crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"
+            integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4"
+            crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js"
+            integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1"
+            crossorigin="anonymous"></script>
+        <script>
+            function sel(x) { return document.getElementById(x) }
+            $("#fullresult").hide();
+            function convert() {
+                const input = document.getElementById("expression").value.trim();
+                document.getElementById("postfix").innerHTML = infixToPostfix(input)['postfixExpression'];
+                document.getElementById("prefix").innerHTML = infixToPrefix(input)['prefixExpression'];
+            }
+            //converter button and expression
+            $("button#convert").click(function () {
+                convert();
+                var items, tab = "";
+                $("#fullresult").show();
+                const input = document.getElementById("expression").value.trim();
+                switch ($('input[name=fixer]:checked').val()) {
+                    case '1':
+                        items = infixToPostfix(input, 1)['table'];
+                        sel("itemname").innerHTML = "Postfix";
+                        $("#ifpre").html("The Steps are as follow:-");
+                        break;
+                    case '2':
+                        items = infixToPrefix(input, 1)['table'];
+                        sel('itemname').innerHTML = "Prefix ( Reversed )";
+                        $("#ifpre").html("1. Reversed the Infix expression along with swithing ( with ) and vice versa.<br/>2. <big><b>Find the Postfix Expression as below table.</b></big><br />3. Reverse the resultant expression like in step 1.");
+                        break;
+                }
+
+                for (var i = 0; i < items.exp.length; i++) {
+                    tab += "<tr><td>" + i + "</td><td>" + items['exp'][i] + "</td><td>" + items['stack'][i] + "</td><td>" + items['conexp'][i] + "</td></tr>";
+                }
+
+                sel("tabledata").innerHTML = tab;
+            })
+
+
+        </script>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-KSX9W2JJ5N"></script>
+        <script>
+            window.dataLayer = window.dataLayer || [];
+            function gtag() { dataLayer.push(arguments); }
+            gtag('js', new Date());
+            gtag('config', 'G-KSX9W2JJ5N');
+            gtag('page', "convertor");
+        </script>
+    </body>
+
+</html>
